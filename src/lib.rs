@@ -288,7 +288,7 @@ pub fn run_with(options: Vec<String>) {
     if std::env::var_os("PLEAMAR_VALIDATE").is_some() {
         flags = wgpu::InstanceFlags::VALIDATION | wgpu::InstanceFlags::DEBUG;
     }
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: wgpu::Backends::PRIMARY, flags, ..wgpu::InstanceDescriptor::new_without_display_handle() });
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: wgpu::Backends::PRIMARY | wgpu::Backends::GL, flags, ..wgpu::InstanceDescriptor::new_without_display_handle() });
     let wanted = scene.surfaces.clone();
 
     println!(

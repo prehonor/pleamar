@@ -1841,15 +1841,32 @@ impl Gpu {
     /// able to show on it. Without —a monitor driven by the platform itself—,
     /// the card is whatever there is.
     pub fn new(instance: &wgpu::Instance, first: Option<&wgpu::Surface<'static>>) -> Gpu {
+        let power_preference = match std::env::var("PLEAMAR_GPU").as_deref() {
+            Ok("high") => wgpu::PowerPreference::HighPerformance,
+            _ => wgpu::PowerPreference::LowPower,
+        };
+
+        // Try PRIMARY backends first (Vulkan/Metal/DX12), then fall back to GL.
         let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             compatible_surface: first,
-            // `PLEAMAR_GPU=high` asks for the fast card (a laptop's discrete one) instead of the frugal one.
-            power_preference: match std::env::var("PLEAMAR_GPU").as_deref() {
-                Ok("high") => wgpu::PowerPreference::HighPerformance,
-                _ => wgpu::PowerPreference::LowPower,
-            },
+            power_preference,
             ..Default::default()
         }))
+        .or_else(|_| {
+            // If no adapter found with PRIMARY, try forcing GL backend.
+            // This is needed on AMD Polaris10 where RADV Vulkan lacks DMA-BUF support
+            // but radeonsi GL supports it.
+            let gl_instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+                backends: wgpu::Backends::GL,
+                flags: wgpu::InstanceFlags::empty(),
+                ..wgpu::InstanceDescriptor::new_without_display_handle()
+            });
+            pollster::block_on(gl_instance.request_adapter(&wgpu::RequestAdapterOptions {
+                compatible_surface: first,
+                power_preference,
+                ..Default::default()
+            }))
+        })
         .expect("there is no graphics adapter");
         let (device, queue) =
             pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {

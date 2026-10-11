@@ -1,7 +1,7 @@
 {
   description = "pleamar: the desktop, written as scenes that never stop moving";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
 
   outputs =
     { self, nixpkgs }:
