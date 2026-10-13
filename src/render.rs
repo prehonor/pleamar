@@ -124,7 +124,7 @@ impl Desks {
             self.execs.resize(max, String::new());
             self.dialog.resize(max, false);
             self.minimized.resize(max, false);
-            self.floating.resize(max, false);
+            self.floating.resize(max, true);
             self.born.resize(max, 0);
         }
     }
@@ -1138,6 +1138,7 @@ pub fn run(
                 // zone it was let go on receives it.
                 ToRender::Pointer(None) if !drops.is_empty() => pointer_later = true,
                 ToRender::Pointer(p) => {
+                    eprintln!("ROUND · Pointer set p={p:?} prev_pointer={pointer:?}");
                     pointer = p;
                     real_pointer = p;
                     last_activity = Instant::now();
@@ -1218,7 +1219,7 @@ pub fn run(
                             desks.execs[slot] = String::new();
                             desks.dialog[slot] = false;
                             desks.minimized[slot] = false;
-                            desks.floating[slot] = false;
+                            desks.floating[slot] = true;
                             desks.stamp += 1;
                             desks.born[slot] = desks.stamp;
                             // What the slot showed before —a window closing, still fading— is no longer it.
@@ -1266,9 +1267,21 @@ pub fn run(
                         NestEvent::Fullscreen(slot, yes) => nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.fullscreen"), yes as u8 as f32),
                         NestEvent::Framed(slot, yes) => nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.framed"), yes as u8 as f32),
                         NestEvent::Urgent(slot, yes) => nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.urgent"), yes as u8 as f32),
-                        NestEvent::Held { slot, how, edges } => {
+                        NestEvent::Held { slot, how, edges, grab_x, grab_y } => {
                             nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.edges"), edges as f32);
                             nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.held"), how as f32);
+                            if how > 0 {
+                                nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.grab_x"), grab_x);
+                                nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.grab_y"), grab_y);
+                            }
+                            let px = pointer.map(|p| p.0).unwrap_or(0.0);
+                            let py = pointer.map(|p| p.1).unwrap_or(0.0);
+                            let sx = nest_screens.get(slot).copied().unwrap_or(0);
+                            let xname = format!("{name}.{slot}.x");
+                            let yname = format!("{name}.{slot}.y");
+                            let xv = scene.facts.iter().position(|(n, _)| *n == xname).map(|k| facts[k]).unwrap_or(0.0);
+                            let yv = scene.facts.iter().position(|(n, _)| *n == yname).map(|k| facts[k]).unwrap_or(0.0);
+                            eprintln!("HELD  · slot={slot} how={how} ptr=({px:.0},{py:.0}) win_screen={sx} win_xy=({xv:.0},{yv:.0}) grab=({grab_x:.0},{grab_y:.0})");
                         }
                         NestEvent::Minimized(slot, yes) => {
                             // Brought back, it comes to the workspace its monitor shows:
@@ -1917,18 +1930,6 @@ pub fn run(
             Some(a) => inside.iter().enumerate().filter(|(_, d)| **d).max_by_key(|(k, _)| (a.zone_rank[*k], *k)).map(|(k, _)| k),
             None => inside.iter().rposition(|d| *d),
         };
-        if std::env::var_os("PLEAMAR_DEBUG_ZONES").is_some() && !edges.is_empty() {
-            let names: Vec<String> = inside
-                .iter()
-                .enumerate()
-                .filter(|(_, d)| **d)
-                .map(|(k, _)| match &arrangement {
-                    Some(a) => format!("{} {:?}", scene.zones[k].id, a.zone_rank[k]),
-                    None => scene.zones[k].id.to_owned(),
-                })
-                .collect();
-            eprintln!("zones  · under the pointer: {names:?}");
-        }
         // An agent's own hand, by its pixels, on what is kept for a person's
         // (`agent: no`): its press does not get through, nor the release after it.
         if buttons_agent.iter().any(|a| *a) {
@@ -2374,7 +2375,25 @@ pub fn run(
                                 // The zone pressed keeps it until the button goes up, even
                                 // if it has moved away from that point (a title bar that
                                 // carries its window with it); others, while they hold it.
-                                (Some(zone), Some((k, o, _))) => zone.active.is_true(c) && (k == z.0 as usize || zone.contains(c, o.0, o.1)),
+                                (Some(zone), Some((k, o, _))) => {
+                                    zone.active.is_true(c)
+                                        && if k == z.0 as usize {
+                                            true
+                                        } else if zone.contains(c, o.0, o.1) {
+                                            let mut cur = k;
+                                            let mut nested = false;
+                                            while let Some(parent) = scene.zones[cur].within {
+                                                if parent.0 as usize == z.0 as usize {
+                                                    nested = true;
+                                                    break;
+                                                }
+                                                cur = parent.0 as usize;
+                                            }
+                                            nested
+                                        } else {
+                                            false
+                                        }
+                                }
                                 _ => false,
                             }
                     }

@@ -1835,6 +1835,21 @@ pub struct Gpu {
 }
 
 impl Gpu {
+    /// Try to get a GL backend adapter as fallback.
+    fn try_gl_adapter(power_preference: wgpu::PowerPreference) -> Option<wgpu::Adapter> {
+        let base = wgpu::InstanceDescriptor::new_without_display_handle();
+        let gl_instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::GL,
+            flags: base.flags,
+            ..base
+        });
+        pollster::block_on(gl_instance.request_adapter(&wgpu::RequestAdapterOptions {
+            compatible_surface: None,
+            power_preference,
+            ..Default::default()
+        })).ok()
+    }
+
     /// It is created with the first surface that arrives: one is needed to know
     /// which adapter and which format are valid.
     /// With the first sheet's surface, if it has one: the card chosen has to be
@@ -1846,28 +1861,31 @@ impl Gpu {
             _ => wgpu::PowerPreference::LowPower,
         };
 
-        // Try PRIMARY backends first (Vulkan/Metal/DX12), then fall back to GL.
-        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        // Try PRIMARY backends first (Vulkan/Metal/DX12).
+        let primary_result = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             compatible_surface: first,
             power_preference,
             ..Default::default()
-        }))
-        .or_else(|_| {
-            // If no adapter found with PRIMARY, try forcing GL backend.
-            // This is needed on AMD Polaris10 where RADV Vulkan lacks DMA-BUF support
-            // but radeonsi GL supports it.
-            let gl_instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-                backends: wgpu::Backends::GL,
-                flags: wgpu::InstanceFlags::empty(),
-                ..wgpu::InstanceDescriptor::new_without_display_handle()
-            });
-            pollster::block_on(gl_instance.request_adapter(&wgpu::RequestAdapterOptions {
-                compatible_surface: first,
-                power_preference,
-                ..Default::default()
-            }))
-        })
-        .expect("there is no graphics adapter");
+        }));
+
+        let adapter = match primary_result {
+            Ok(adapter) => {
+                let info = adapter.get_info();
+                // On AMD Polaris10, RADV Vulkan reports no DMA-BUF modifiers,
+                // so DMA-BUF import will fail. Fall back to GL (radeonsi) in that case.
+                let supports_dma_buf = adapter.features().contains(wgpu::Features::VULKAN_EXTERNAL_MEMORY_DMA_BUF);
+                if info.backend == wgpu::Backend::Vulkan && !supports_dma_buf {
+                    eprintln!("gpu · Vulkan adapter '{}' lacks DMA-BUF support, trying GL fallback", info.name);
+                    Self::try_gl_adapter(power_preference).unwrap_or(adapter)
+                } else {
+                    adapter
+                }
+            }
+            Err(_) => {
+                // No PRIMARY adapter at all; try GL as last resort.
+                Self::try_gl_adapter(power_preference).expect("there is no graphics adapter")
+            }
+        };
         let (device, queue) =
             pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
                 // By default, wgpu reserves blocks of 128 MB on the card and 64 in

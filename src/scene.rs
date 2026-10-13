@@ -2130,6 +2130,7 @@ pub enum DockAction {
 pub const DOCK_ITEMS: usize = 12;
 
 /// What the compositor inside the scene tells the render.
+#[derive(Debug)]
 pub enum NestEvent {
     /// Where programs connect: `WAYLAND_DISPLAY`.
     Socket(String),
@@ -2172,7 +2173,7 @@ pub enum NestEvent {
     /// A window asks, from its own title bar or edge, to be carried with the
     /// mouse (1) or stretched (2) by `edges` (xdg-shell's: 1 top, 2 bottom,
     /// 4 left, 8 right, added); 0 when the button is let go.
-    Held { slot: usize, how: u32, edges: u32 },
+    Held { slot: usize, how: u32, edges: u32, grab_x: f32, grab_y: f32 },
     /// A window is put away now (minimized), or back: it asked, the scene
     /// did, or whoever lists the windows (Marea) did.
     Minimized(usize, bool),
