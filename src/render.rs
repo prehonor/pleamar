@@ -1267,13 +1267,9 @@ pub fn run(
                         NestEvent::Fullscreen(slot, yes) => nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.fullscreen"), yes as u8 as f32),
                         NestEvent::Framed(slot, yes) => nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.framed"), yes as u8 as f32),
                         NestEvent::Urgent(slot, yes) => nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.urgent"), yes as u8 as f32),
-                        NestEvent::Held { slot, how, edges, grab_x, grab_y } => {
+                        NestEvent::Held { slot, how, edges } => {
                             nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.edges"), edges as f32);
                             nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.held"), how as f32);
-                            if how > 0 {
-                                nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.grab_x"), grab_x);
-                                nest_fact(&scene, &mut facts, &to_logic, &format!("{name}.{slot}.grab_y"), grab_y);
-                            }
                             let px = pointer.map(|p| p.0).unwrap_or(0.0);
                             let py = pointer.map(|p| p.1).unwrap_or(0.0);
                             let sx = nest_screens.get(slot).copied().unwrap_or(0);
@@ -1281,7 +1277,7 @@ pub fn run(
                             let yname = format!("{name}.{slot}.y");
                             let xv = scene.facts.iter().position(|(n, _)| *n == xname).map(|k| facts[k]).unwrap_or(0.0);
                             let yv = scene.facts.iter().position(|(n, _)| *n == yname).map(|k| facts[k]).unwrap_or(0.0);
-                            eprintln!("HELD  · slot={slot} how={how} ptr=({px:.0},{py:.0}) win_screen={sx} win_xy=({xv:.0},{yv:.0}) grab=({grab_x:.0},{grab_y:.0})");
+                            eprintln!("HELD  · slot={slot} how={how} ptr=({px:.0},{py:.0}) win_screen={sx} win_xy=({xv:.0},{yv:.0})");
                         }
                         NestEvent::Minimized(slot, yes) => {
                             // Brought back, it comes to the workspace its monitor shows:

@@ -1,4 +1,5 @@
 /target
 .idea
+.marscode
 *.so
 *.so.[0-9]*
