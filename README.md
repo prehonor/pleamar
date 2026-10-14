@@ -8,6 +8,7 @@
 ![Badge Language]
 ![Badge Commit]
 [![Badge Issues]][Issues]
+[![Badge Discord]][Discord]
 [![Badge X]][X]
 [![Badge Ko-fi]][Ko-fi]
 
@@ -26,9 +27,17 @@ waits for the logic.
 **[<kbd> <br> Reference <br> </kbd>][Reference]**
 **[<kbd> <br> pleamar-wm <br> </kbd>][pleamar-wm]**
 **[<kbd> <br> Marea <br> </kbd>][Marea]**
+**[<kbd> <br> Discord <br> </kbd>][Discord]**
 
 ---
 
+<br>
+
+<img src="assets/glass.webp" width="860" alt="Glass over a moving background: a clear lens, a plate that frosts itself, a smoked capsule and a milky one">
+
+<sub>`examples/glass.plm`, running: a clear lens, a plate that frosts itself where what is behind is busy, smoke and milk.</sub>
+
+<br>
 <br>
 
 </div>
@@ -59,6 +68,23 @@ So if you are on Hyprland and just want a new bar, pleamar is all you need.
 | **pleamar-wm** | ✅ A whole desktop of its own |
 | **X11 sessions** | ❌ pleamar is for Wayland |
 
+# What's new
+
+- **Glass that behaves like glass** (0.2.35): the lens bends what is behind it as
+  a pane would —a bevel, Snell's law, a colour for each index, a rim that
+  mirrors—, and three new words say what kind of glass it is: `frost: auto`
+  keeps it clear over something plain and frosts it where words or lines are
+  behind, `smoke` darkens it for white text, `milk` whitens it for dark text.
+- **Live pictures of your windows** (0.2.20, cheaper in 0.2.32):
+  `thumbnails.live` gives a window's picture as a texture that follows it, for
+  overviews and switchers that move.
+- **Effects that cost less** (0.2.33): groups with opacity, blur or glow that do
+  not reach each other are painted together —60 blurred groups went from 4.7 ms
+  to 0.3 ms of recording a frame—, and a scene with one surface keeps far less
+  memory (1.2 GB to 0.2 GB in the shell that reported it).
+
+Every release, with what changed: [Releases].
+
 # Features
 
 - **Animation that never depends on logic**: the scene declares what moves and
@@ -67,8 +93,9 @@ So if you are on Hyprland and just want a new bar, pleamar is all you need.
 - **A language of its own, checked on load**: a misspelled name is an error with
   file, line, arrow and «did you mean…?», never an `undefined` at runtime.
 - **Every property is a spring** — interrupt it halfway and it turns without a jolt.
-- **Shapes that melt into each other**: shadow, rim, light, gradients, glass,
-  blur, glow, particles and your own WGSL shaders, all signed distance underneath.
+- **Shapes that melt into each other**: shadow, rim, light, gradients, glass
+  that bends what is behind it (clear, frosted, smoked or milky), blur, glow,
+  particles and your own WGSL shaders, all signed distance underneath.
   An svg comes in as paths, by layers, and melts with what carries it.
 - **Luau logic in a sandbox**, on its own thread, behind permissions you approve —
   a plugin runs with what you allow it, never with everything you can do.
@@ -96,6 +123,13 @@ So if you are on Hyprland and just want a new bar, pleamar is all you need.
 
 # Gallery
 
+<br>
+
+<img src="assets/marea.webp" width="560" alt="Marea changing her skin to liquid glass">
+
+<sub>[Marea], a whole shell in one scene: here she changes her skin to liquid glass.</sub>
+
+<br>
 <br>
 
 ![Preview Desktop]
@@ -380,7 +414,8 @@ and their notices travel with any binary you hand out.
 
 Contributions are welcome, made with AI or without it: see the [AI policy](AI_POLICY.md).
 
-Made by **[@k4ditano][X]** — follow along on X for what comes next.
+Made by **[@k4ditano][X]** — follow along on X for what comes next, and come
+and say hi, ask or show what you made on **[Discord]**.
 If it makes your desktop nicer, you can **[buy me a coffee on Ko-fi][Ko-fi]** ☕
 
 <!----------------------------------------------------------------------------->
@@ -392,8 +427,10 @@ If it makes your desktop nicer, you can **[buy me a coffee on Ko-fi][Ko-fi]** �
 [Marea]: https://github.com/k4ditano/marea-plm
 [License]: LICENSE
 [X]: https://x.com/k4ditano
+[Discord]: https://discord.gg/N7kbYC49b2
 [Ko-fi]: https://ko-fi.com/k4ditano
 [Issues]: https://github.com/k4ditano/pleamar/issues
+[Releases]: https://github.com/k4ditano/pleamar/releases
 [nixGL]: https://github.com/nix-community/nixGL
 
 <!----------------------------------{ Thanks }--------------------------------->
@@ -417,5 +454,6 @@ If it makes your desktop nicer, you can **[buy me a coffee on Ko-fi][Ko-fi]** �
 [Badge Language]: https://img.shields.io/badge/made%20with-Rust%20%2B%20Luau-2c7684?style=flat-square
 [Badge Commit]: https://img.shields.io/github/last-commit/k4ditano/pleamar?style=flat-square&color=9ed6bd
 [Badge Issues]: https://img.shields.io/github/issues/k4ditano/pleamar?style=flat-square&color=2c7684
+[Badge Discord]: https://img.shields.io/badge/chat-Discord-5865f2?style=flat-square&logo=discord&logoColor=white
 [Badge X]: https://img.shields.io/badge/follow-@k4ditano-000000?style=flat-square&logo=x
 [Badge Ko-fi]: https://img.shields.io/badge/support-Ko--fi-ff5e5b?style=flat-square&logo=ko-fi&logoColor=white
